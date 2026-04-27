@@ -42,6 +42,10 @@ const SLASH_COMMANDS = [
 	{ name: 'Heading 3', cmd: 'h3', syntax: '### ', offset: 4, icon: 'H3' },
 	{ name: 'Bold', cmd: 'bold', syntax: '** **', offset: 3, icon: 'B' },
 	{ name: 'Italic', cmd: 'italic', syntax: '* *', offset: 2, icon: 'I' },
+	{ name: 'Bullet List', cmd: 'ul', syntax: '- ', offset: 2, icon: '•' },
+	{ name: 'Numbered List', cmd: 'ol', syntax: '1. ', offset: 3, icon: '1.' },
+	{ name: 'Sub Bullet', cmd: 'subul', syntax: '    - ', offset: 6, icon: '↳•' },
+	{ name: 'Sub Numbered', cmd: 'subol', syntax: '    1. ', offset: 7, icon: '↳1.' },
 	{ name: 'Task List', cmd: 'todo', syntax: '- [ ] ', offset: 6, icon: '☑' },
 	{ name: 'Code Block', cmd: 'code', syntax: '```\n\n```', offset: 4, icon: '{ }' },
 	{ name: 'Math Block', cmd: 'math', syntax: '$$\n\n$$', offset: 3, icon: '∑' },
@@ -307,6 +311,65 @@ function App() {
 						placeholder="Any thoughts... Type '/' for commands"
 						value={content}
 						onChange={handleContentChange}
+						onKeyDown={(e) => {
+							if (showSlashMenu && (e.key === 'Tab' || e.key === 'Enter') && filteredCommands.length > 0) {
+								e.preventDefault();
+								const firstCmd = filteredCommands[0];
+								applySlashCommand(firstCmd.syntax, firstCmd.offset);
+								return;
+							}
+
+							if (e.key === 'Enter' && !e.shiftKey) {
+								const textarea = e.currentTarget;
+								const start = textarea.selectionStart;
+								const value = textarea.value;
+								
+								const lastNewLine = value.lastIndexOf('\n', start - 1);
+								const lineStart = lastNewLine === -1 ? 0 : lastNewLine + 1;
+								const lineText = value.substring(lineStart, start);
+								
+								// Task list prefix
+								const todoMatch = lineText.match(/^(\s*- \[[ xX]\]\s+)/);
+								// Bullet list prefix (prevent matching task list)
+								const ulMatch = !todoMatch ? lineText.match(/^(\s*[-*+]\s+)/) : null;
+								// Ordered list prefix
+								const olMatch = lineText.match(/^(\s*)(\d+)\.\s+/);
+
+								let prefix = '';
+								if (todoMatch) {
+									prefix = todoMatch[1].replace(/\[[xX]\]/, '[ ]');
+								} else if (ulMatch) {
+									prefix = ulMatch[1];
+								} else if (olMatch) {
+									const spaces = olMatch[1];
+									const num = parseInt(olMatch[2]);
+									prefix = `${spaces}${num + 1}. `;
+								}
+
+								if (prefix) {
+									const contentAfterPrefix = lineText.substring(prefix.length).trim();
+									if (contentAfterPrefix === '') {
+										// Empty item - clear the prefix and end the list
+										e.preventDefault();
+										const newValue = value.substring(0, lineStart) + value.substring(start);
+										setContent(newValue);
+										setTimeout(() => {
+											textarea.setSelectionRange(lineStart, lineStart);
+										}, 0);
+									} else {
+										// Continue the list
+										e.preventDefault();
+										const insertion = '\n' + prefix;
+										const newValue = value.substring(0, start) + insertion + value.substring(start);
+										setContent(newValue);
+										setTimeout(() => {
+											const newPos = start + insertion.length;
+											textarea.setSelectionRange(newPos, newPos);
+										}, 0);
+									}
+								}
+							}
+						}}
 						rows={4}
 					/>
 					
