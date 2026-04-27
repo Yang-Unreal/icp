@@ -61,6 +61,7 @@ const SLASH_COMMANDS = [
 		icon: "↳1.",
 	},
 	{ name: "Task List", cmd: "todo", syntax: "- [ ] ", offset: 6, icon: "☑" },
+	{ name: "Inline Code", cmd: "ic", syntax: "` `", offset: 1, icon: "i{}" },
 	{
 		name: "Code Block",
 		cmd: "code",
@@ -68,6 +69,7 @@ const SLASH_COMMANDS = [
 		offset: 4,
 		icon: "{ }",
 	},
+	{ name: "Inline Math", cmd: "im", syntax: "$ $", offset: 1, icon: "i∑" },
 	{ name: "Math Block", cmd: "math", syntax: "$$\n\n$$", offset: 3, icon: "∑" },
 	{
 		name: "Mermaid",
@@ -398,7 +400,29 @@ function App() {
 		(cmd) =>
 			cmd.name.toLowerCase().includes(slashFilter) ||
 			cmd.cmd.toLowerCase().includes(slashFilter),
-	);
+	).sort((a, b) => {
+		const aCmd = a.cmd.toLowerCase();
+		const bCmd = b.cmd.toLowerCase();
+		const aName = a.name.toLowerCase();
+		const bName = b.name.toLowerCase();
+
+		// Priority 1: Exact command match
+		if (aCmd === slashFilter && bCmd !== slashFilter) return -1;
+		if (bCmd === slashFilter && aCmd !== slashFilter) return 1;
+
+		// Priority 2: Prefix command match
+		if (aCmd.startsWith(slashFilter) && !bCmd.startsWith(slashFilter))
+			return -1;
+		if (bCmd.startsWith(slashFilter) && !aCmd.startsWith(slashFilter)) return 1;
+
+		// Priority 3: Prefix name match
+		if (aName.startsWith(slashFilter) && !bName.startsWith(slashFilter))
+			return -1;
+		if (bName.startsWith(slashFilter) && !aName.startsWith(slashFilter))
+			return 1;
+
+		return 0;
+	});
 
 	return (
 		<main className="memos-container">
