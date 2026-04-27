@@ -14,6 +14,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import "katex/dist/katex.min.css";
 import mermaid from "mermaid";
 import remarkBreaks from "remark-breaks";
+import remarkFlexibleMarkers from "remark-flexible-markers";
 import type { PluggableList } from "unified";
 
 mermaid.initialize({ startOnLoad: false, theme: "dark" });
@@ -86,6 +87,7 @@ const SLASH_COMMANDS = [
 		offset: 56,
 		icon: "⊞",
 	},
+	{ name: "Highlight", cmd: "mark", syntax: "== ==", offset: 3, icon: "H" },
 ];
 
 const Mermaid = ({ chart }: { chart: string }) => {
@@ -108,7 +110,7 @@ const Mermaid = ({ chart }: { chart: string }) => {
 };
 
 // Extract plugins and components outside of App to prevent unnecessary re-renders
-const remarkPlugins: PluggableList = [remarkGfm, remarkMath, remarkBreaks];
+const remarkPlugins: PluggableList = [remarkGfm, remarkMath, remarkBreaks, remarkFlexibleMarkers];
 const rehypePlugins: PluggableList = [rehypeKatex];
 
 const MarkdownComponents: Components = {

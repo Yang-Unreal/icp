@@ -797,3 +797,11 @@ body {
 	display: flex;
 	justify-content: center;
 }
+
+.markdown-body mark {
+background-color: rgba(139, 92, 246, 0.4);
+color: #ffffff;
+padding: 0 4px;
+border-radius: 4px;
+font-weight: 500;
+}
