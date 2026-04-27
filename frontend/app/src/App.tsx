@@ -109,6 +109,140 @@ const Mermaid = ({ chart }: { chart: string }) => {
 	return <div ref={ref} className="mermaid-chart" />;
 };
 
+interface MemoCardProps {
+	id: bigint;
+	note: Note;
+	onEdit: (id: bigint, note: Note) => void;
+	onDelete: (id: bigint) => void;
+	onTagClick: (tag: string) => void;
+	remarkPlugins: any;
+	rehypePlugins: any;
+	MarkdownComponents: any;
+}
+
+const MemoCard = ({
+	id,
+	note,
+	onEdit,
+	onDelete,
+	onTagClick,
+	remarkPlugins,
+	rehypePlugins,
+	MarkdownComponents,
+}: MemoCardProps) => {
+	const [isExpanded, setIsExpanded] = useState(false);
+
+	return (
+		<div
+			className={`memo-card ${note.pinned ? "pinned" : ""} ${isExpanded ? "expanded" : "collapsed"}`}
+		>
+			<div className="memo-header" onClick={() => setIsExpanded(!isExpanded)}>
+				<div className="memo-meta">
+					<div className="memo-time">
+						{formatTimestamp(note.created)}
+						{note.updated !== note.created && " (edited)"}
+					</div>
+					<div className="memo-title-preview">{note.title}</div>
+				</div>
+				<div className="memo-actions">
+					{note.pinned && (
+						<svg
+							className="pin-icon"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+							stroke="none"
+						>
+							<title>Pinned</title>
+							<path d="M16 11V5.5C16 4.67 15.33 4 14.5 4h-5C8.67 4 8 4.67 8 5.5V11L6 14v2h5.5v5l.5 1 .5-1v-5H18v-2l-2-3z" />
+						</svg>
+					)}
+					<button
+						type="button"
+						className="icon-btn"
+						onClick={(e) => {
+							e.stopPropagation();
+							onEdit(id, note);
+						}}
+						title="Edit"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<title>Edit</title>
+							<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+							<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+						</svg>
+					</button>
+					<button
+						type="button"
+						className="icon-btn delete-btn"
+						onClick={(e) => {
+							e.stopPropagation();
+							onDelete(id);
+						}}
+						title="Delete"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
+							<title>Delete</title>
+							<polyline points="3 6 5 6 21 6" />
+							<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+							<line x1="10" y1="11" x2="10" y2="17" />
+							<line x1="14" y1="11" x2="14" y2="17" />
+						</svg>
+					</button>
+					<div className={`expand-icon ${isExpanded ? "rotated" : ""}`}>
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							width="16"
+							height="16"
+						>
+							<polyline points="6 9 12 15 18 9" />
+						</svg>
+					</div>
+				</div>
+			</div>
+			{isExpanded && (
+				<div className="memo-body">
+					<div className="memo-content markdown-body">
+						<ReactMarkdown
+							remarkPlugins={remarkPlugins as any}
+							rehypePlugins={rehypePlugins as any}
+							components={MarkdownComponents}
+						>
+							{note.content}
+						</ReactMarkdown>
+					</div>
+					{note.tags && note.tags.length > 0 && (
+						<div className="memo-tags">
+							{note.tags.map((tag) => (
+								<button
+									type="button"
+									key={tag}
+									className="tag-pill"
+									onClick={() => onTagClick(tag)}
+								>
+									# {tag}
+								</button>
+							))}
+						</div>
+					)}
+				</div>
+			)}
+		</div>
+	);
+};
+
 // Extract plugins and components outside of App to prevent unnecessary re-renders
 const remarkPlugins: PluggableList = [remarkGfm, remarkMath, remarkBreaks, remarkFlexibleMarkers];
 const rehypePlugins: PluggableList = [rehypeKatex];
@@ -634,89 +768,17 @@ function App() {
 						<div className="empty-state">No memos found.</div>
 					) : (
 						sortedNotes.map(([id, note]) => (
-							<div
+							<MemoCard
 								key={id.toString()}
-								className={`memo-card ${note.pinned ? "pinned" : ""}`}
-							>
-								<div className="memo-header">
-									<div className="memo-time">
-										{formatTimestamp(note.created)}
-										{note.updated !== note.created && " (edited)"}
-									</div>
-									<div className="memo-actions">
-										{note.pinned && (
-											<svg
-												className="pin-icon"
-												viewBox="0 0 24 24"
-												fill="currentColor"
-												stroke="none"
-											>
-												<title>Pinned</title>
-												<path d="M16 11V5.5C16 4.67 15.33 4 14.5 4h-5C8.67 4 8 4.67 8 5.5V11L6 14v2h5.5v5l.5 1 .5-1v-5H18v-2l-2-3z" />
-											</svg>
-										)}
-										<button
-											type="button"
-											className="icon-btn"
-											onClick={() => handleEditNote(id, note)}
-											title="Edit"
-										>
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-											>
-												<title>Edit</title>
-												<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-												<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-											</svg>
-										</button>
-										<button
-											type="button"
-											className="icon-btn delete-btn"
-											onClick={() => handleDelete(id)}
-											title="Delete"
-										>
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-											>
-												<title>Delete</title>
-												<polyline points="3 6 5 6 21 6" />
-												<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-												<line x1="10" y1="11" x2="10" y2="17" />
-												<line x1="14" y1="11" x2="14" y2="17" />
-											</svg>
-										</button>
-									</div>
-								</div>
-								<div className="memo-content markdown-body">
-									<ReactMarkdown
-										remarkPlugins={remarkPlugins as any}
-										rehypePlugins={rehypePlugins as any}
-										components={MarkdownComponents}
-									>
-										{note.content}
-									</ReactMarkdown>
-								</div>
-								{note.tags && note.tags.length > 0 && (
-									<div className="memo-tags">
-										{note.tags.map((tag) => (
-											<button
-												type="button"
-												key={tag}
-												className="tag-pill"
-												onClick={() => handleTagClick(tag)}
-											>
-												# {tag}
-											</button>
-										))}
-									</div>
-								)}
-							</div>
+								id={id}
+								note={note}
+								onEdit={handleEditNote}
+								onDelete={handleDelete}
+								onTagClick={handleTagClick}
+								remarkPlugins={remarkPlugins}
+								rehypePlugins={rehypePlugins}
+								MarkdownComponents={MarkdownComponents}
+							/>
 						))
 					)}
 				</div>
