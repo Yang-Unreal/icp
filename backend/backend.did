@@ -1,13 +1,16 @@
 type Note = record {
   title : text;
   content : text;
+  tags : vec text;
+  pinned : bool;
   created : int;
+  updated : int;
 };
 
 service : {
-  createNote : (text, text) -> (nat);
+  createNote : (text, text, vec text, bool) -> (nat);
   getNote : (nat) -> (opt Note) query;
-  updateNote : (nat, text, text) -> (bool);
+  updateNote : (nat, text, text, vec text, bool) -> (bool);
   deleteNote : (nat) -> (bool);
   listNotes : () -> (vec record { nat; Note }) query;
 }

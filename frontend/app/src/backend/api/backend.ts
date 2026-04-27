@@ -55,19 +55,22 @@ export interface Note {
     title: string;
     created: bigint;
     content: string;
+    tags: Array<string>;
+    pinned: boolean;
+    updated: bigint;
 }
 export interface backendInterface {
-    createNote(arg0: string, arg1: string): Promise<bigint>;
+    createNote(arg0: string, arg1: string, arg2: Array<string>, arg3: boolean): Promise<bigint>;
     deleteNote(arg0: bigint): Promise<boolean>;
     getNote(arg0: bigint): Promise<Note | null>;
     listNotes(): Promise<Array<[bigint, Note]>>;
-    updateNote(arg0: bigint, arg1: string, arg2: string): Promise<boolean>;
+    updateNote(arg0: bigint, arg1: string, arg2: string, arg3: Array<string>, arg4: boolean): Promise<boolean>;
 }
 import type { Note as _Note } from "./declarations/backend.did";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>){}
-    async createNote(arg0: string, arg1: string): Promise<bigint> {
-        const result = await this.actor.createNote(arg0, arg1);
+    async createNote(arg0: string, arg1: string, arg2: Array<string>, arg3: boolean): Promise<bigint> {
+        const result = await this.actor.createNote(arg0, arg1, arg2, arg3);
         return result;
     }
     async deleteNote(arg0: bigint): Promise<boolean> {
@@ -82,8 +85,8 @@ export class Backend implements backendInterface {
         const result = await this.actor.listNotes();
         return result;
     }
-    async updateNote(arg0: bigint, arg1: string, arg2: string): Promise<boolean> {
-        const result = await this.actor.updateNote(arg0, arg1, arg2);
+    async updateNote(arg0: bigint, arg1: string, arg2: string, arg3: Array<string>, arg4: boolean): Promise<boolean> {
+        const result = await this.actor.updateNote(arg0, arg1, arg2, arg3, arg4);
         return result;
     }
 }

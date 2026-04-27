@@ -13,14 +13,25 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'created' : IDL.Int,
     'content' : IDL.Text,
+    'tags' : IDL.Vec(IDL.Text),
+    'pinned' : IDL.Bool,
+    'updated' : IDL.Int,
   });
   
   return IDL.Service({
-    'createNote' : IDL.Func([IDL.Text, IDL.Text], [IDL.Nat], []),
+    'createNote' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Vec(IDL.Text), IDL.Bool],
+        [IDL.Nat],
+        [],
+      ),
     'deleteNote' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'getNote' : IDL.Func([IDL.Nat], [IDL.Opt(Note)], ['query']),
     'listNotes' : IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Nat, Note))], ['query']),
-    'updateNote' : IDL.Func([IDL.Nat, IDL.Text, IDL.Text], [IDL.Bool], []),
+    'updateNote' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Vec(IDL.Text), IDL.Bool],
+        [IDL.Bool],
+        [],
+      ),
   });
 };
 

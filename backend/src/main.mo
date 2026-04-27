@@ -9,19 +9,26 @@ persistent actor {
   type Note = {
     title : Text;
     content : Text;
+    tags : [Text];
+    pinned : Bool;
     created : Int;
+    updated : Int;
   };
 
   let notes = Map.empty<Nat, Note>();
   var nextId : Nat = 0;
 
-  public func createNote(title : Text, content : Text) : async Nat {
+  public func createNote(title : Text, content : Text, tags : [Text], pinned : Bool) : async Nat {
     let id = nextId;
     nextId += 1;
+    let now = Time.now();
     Map.add(notes, Nat.compare, id, {
       title;
       content;
-      created = Time.now();
+      tags;
+      pinned;
+      created = now;
+      updated = now;
     });
     id
   };
@@ -30,13 +37,16 @@ persistent actor {
     Map.get(notes, Nat.compare, id)
   };
 
-  public func updateNote(id : Nat, title : Text, content : Text) : async Bool {
+  public func updateNote(id : Nat, title : Text, content : Text, tags : [Text], pinned : Bool) : async Bool {
     switch (Map.get(notes, Nat.compare, id)) {
       case (?existing) {
         Map.add(notes, Nat.compare, id, {
           title;
           content;
+          tags;
+          pinned;
           created = existing.created;
+          updated = Time.now();
         });
         true
       };

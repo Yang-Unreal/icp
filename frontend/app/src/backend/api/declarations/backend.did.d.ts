@@ -14,13 +14,19 @@ export interface Note {
   'title' : string,
   'created' : bigint,
   'content' : string,
+  'tags' : Array<string>,
+  'pinned' : boolean,
+  'updated' : bigint,
 }
 export interface _SERVICE {
-  'createNote' : ActorMethod<[string, string], bigint>,
+  'createNote' : ActorMethod<[string, string, Array<string>, boolean], bigint>,
   'deleteNote' : ActorMethod<[bigint], boolean>,
   'getNote' : ActorMethod<[bigint], [] | [Note]>,
   'listNotes' : ActorMethod<[], Array<[bigint, Note]>>,
-  'updateNote' : ActorMethod<[bigint, string, string], boolean>,
+  'updateNote' : ActorMethod<
+    [bigint, string, string, Array<string>, boolean],
+    boolean
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
