@@ -372,6 +372,7 @@ const MarkdownComponents: Components = {
 function App() {
 	const [notes, setNotes] = useState<Array<[bigint, Note]>>([]);
 	const [editingId, setEditingId] = useState<bigint | null>(null);
+	const [title, setTitle] = useState("");
 	const [content, setContent] = useState("");
 	const [tags, setTags] = useState("");
 	const [pinned, setPinned] = useState(false);
@@ -411,6 +412,7 @@ function App() {
 
 	const handleEditNote = (id: bigint, note: Note) => {
 		setEditingId(id);
+		setTitle(note.title);
 		setContent(note.content);
 		setTags(note.tags ? note.tags.join(", ") : "");
 		setPinned(note.pinned || false);
@@ -423,6 +425,7 @@ function App() {
 
 	const handleNewNote = () => {
 		setEditingId(null);
+		setTitle("");
 		setContent("");
 		setTags("");
 		setPinned(false);
@@ -438,7 +441,18 @@ function App() {
 				.split(",")
 				.map((t) => t.trim())
 				.filter((t) => t.length > 0);
-			const finalTitle = content.split("\n")[0].substring(0, 50);
+
+			let finalTitle = title.trim();
+			if (!finalTitle) {
+				const now = new Date();
+				finalTitle = `Note ${now.toLocaleString("en-US", {
+					month: "short",
+					day: "numeric",
+					hour: "2-digit",
+					minute: "2-digit",
+				})}`;
+			}
+
 			if (editingId !== null) {
 				await backendActor.updateNote(
 					editingId,
@@ -641,6 +655,13 @@ function App() {
 				{isLoading && <div className="loading-bar" />}
 
 				<div className="editor-card relative">
+					<input
+						type="text"
+						className="editor-title"
+						placeholder="Title (optional)"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+					/>
 					<textarea
 						ref={editorRef}
 						className="editor-content"

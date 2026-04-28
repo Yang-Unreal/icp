@@ -206,6 +206,28 @@ body {
 	overflow: hidden;
 }
 
+.editor-title {
+	background: transparent;
+	border: none;
+	color: var(--text);
+	font-size: 21px; /* Fibonacci 21 */
+	font-weight: 700;
+	padding: 0 0 8px 0;
+	outline: none;
+	font-family: inherit;
+	border-bottom: 1px solid transparent;
+	transition: border-color 0.2s;
+}
+
+.editor-title:focus {
+	border-bottom-color: var(--card-border);
+}
+
+.editor-title::placeholder {
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
 .editor-content::placeholder {
 	color: var(--text-muted);
 }
