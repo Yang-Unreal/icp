@@ -510,13 +510,32 @@ function App() {
 					tagsArray,
 					pinned,
 				);
+				// Optimistic update
+				setNotes((prev) =>
+					prev.map(([id, n]) =>
+						id === editingId
+							? [
+									id,
+									{
+										...n,
+										title: finalTitle,
+										content,
+										tags: tagsArray,
+										pinned,
+										updated: BigInt(Date.now() * 1000000),
+									},
+							  ]
+							: [id, n],
+					),
+				);
 			} else {
 				await backendActor.createNote(finalTitle, content, tagsArray, pinned);
+				await fetchNotes();
 			}
-			await fetchNotes();
 			handleNewNote();
 		} catch (e) {
 			console.error(e);
+			await fetchNotes(); // Revert/Refresh on error
 		} finally {
 			setIsLoading(false);
 		}
@@ -525,16 +544,22 @@ function App() {
 	const handleDelete = async (id: bigint) => {
 		if (!window.confirm("Are you sure you want to delete this memo?")) return;
 		setIsLoading(true);
+
+		// Optimistic update
+		const previousNotes = notes;
+		setNotes((prev) => prev.filter(([nid]) => nid !== id));
+
 		try {
 			await backendActor.deleteNote(id);
 			if (editingId === id) {
 				handleNewNote();
 			}
-			await fetchNotes();
 		} catch (e) {
 			console.error(e);
+			setNotes(previousNotes); // Revert on error
 		} finally {
 			setIsLoading(false);
+			fetchNotes(); // Final sync
 		}
 	};
 
@@ -568,13 +593,23 @@ function App() {
 	);
 
 	const filteredNotes = notes.filter(([_, note]) => {
-		if (!searchQuery) return true;
-		const q = searchQuery.toLowerCase();
-		return (
-			note.title.toLowerCase().includes(q) ||
-			note.content.toLowerCase().includes(q) ||
-			note.tags?.some((t) => t.toLowerCase().includes(q))
-		);
+		if (!searchQuery.trim()) return true;
+
+		// Split search query into individual terms and check if each term matches something in the note
+		const terms = searchQuery
+			.toLowerCase()
+			.split(/\s+/)
+			.filter((t) => t.length > 0);
+
+		return terms.every((term) => {
+			const isTagMatch = note.tags?.some((t) =>
+				t.toLowerCase().includes(term),
+			);
+			const isTitleMatch = note.title.toLowerCase().includes(term);
+			const isContentMatch = note.content.toLowerCase().includes(term);
+
+			return isTagMatch || isTitleMatch || isContentMatch;
+		});
 	});
 
 	const sortedNotes = filteredNotes.sort((a, b) => {
@@ -597,8 +632,19 @@ function App() {
 
 	const handleTagClick = (tag: string) => {
 		setSearchQuery((prev) => {
-			if (prev.includes(tag)) return prev.replace(tag, "").trim();
-			return `${prev} ${tag}`.trim();
+			const terms = prev
+				.split(/\s+/)
+				.map((t) => t.trim())
+				.filter((t) => t.length > 0);
+			const tagSet = new Set(terms);
+
+			if (tagSet.has(tag)) {
+				tagSet.delete(tag);
+			} else {
+				tagSet.add(tag);
+			}
+
+			return Array.from(tagSet).join(" ");
 		});
 	};
 
