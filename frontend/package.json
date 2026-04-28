@@ -1,9 +1,6 @@
 {
   "name": "icp-frontend-environment-variables",
   "scripts": {
-    "build": "npm run build --workspaces"
-  },
-  "workspaces": [
-    "app"
-  ]
+    "build": "pnpm --filter app run build"
+  }
 }

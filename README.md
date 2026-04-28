@@ -13,7 +13,7 @@ This project consists of two canisters:
 
 The [`@icp-sdk/bindgen`](https://npmjs.com/package/@icp-sdk/bindgen) library offers a plugin for Vite that generates the TypeScript Candid bindings from the [`backend.did`](./backend/backend.did) file. The bindings are generated at build time by Vite and are saved in the [`frontend/app/src/backend/api/`](./frontend/app/src/backend/api/) folder.
 
-The plugin supports hot module replacement, so you can run the frontend in development mode (by running `npm run dev` in the [`frontend/app/`](./frontend/app/) folder) and make changes to the Candid declaration file to see the bindings being updated in real time.
+The plugin supports hot module replacement, so you can run the frontend in development mode (by running `pnpm --filter app run dev` in the [`frontend/app/`](./frontend/app/) folder) and make changes to the Candid declaration file to see the bindings being updated in real time.
 
 See the [`vite.config.ts`](./frontend/app/vite.config.ts) file for how the plugin is used.
 
@@ -33,7 +33,7 @@ In the [`App.tsx`](./frontend/app/src/App.tsx) file, you can see how the fronten
 Before you begin, ensure that you have the following installed:
 
 - [Node.js](https://nodejs.org/)
-- [npm](https://docs.npmjs.com/)
+- [pnpm](https://pnpm.io/)
 
 ## Run It
 
