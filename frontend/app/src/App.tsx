@@ -1,16 +1,22 @@
 import { getCanisterEnv } from "@icp-sdk/core/agent/canister-env";
-import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { createActor, type Note } from "./backend/api/backend";
 import "./App.css";
 
+import type { Components } from "react-markdown";
 // Markdown Imports
 import ReactMarkdown from "react-markdown";
-import type { Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import rehypeKatex from "rehype-katex";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import "katex/dist/katex.min.css";
 import mermaid from "mermaid";
 import remarkBreaks from "remark-breaks";
@@ -21,6 +27,7 @@ mermaid.initialize({ startOnLoad: false, theme: "dark" });
 
 interface CanisterEnv {
 	readonly "PUBLIC_CANISTER_ID:backend": string;
+	readonly IC_ROOT_KEY?: string;
 }
 
 const canisterEnv = getCanisterEnv<CanisterEnv>();
@@ -28,7 +35,7 @@ const canisterId = canisterEnv["PUBLIC_CANISTER_ID:backend"];
 
 const backendActor = createActor(canisterId, {
 	agentOptions: {
-		rootKey: !import.meta.env.DEV ? (canisterEnv as any)?.IC_ROOT_KEY : undefined,
+		rootKey: !import.meta.env.DEV ? canisterEnv.IC_ROOT_KEY : undefined,
 		shouldFetchRootKey: import.meta.env.DEV,
 	},
 });
@@ -115,9 +122,9 @@ interface MemoCardProps {
 	onEdit: (id: bigint, note: Note) => void;
 	onDelete: (id: bigint) => void;
 	onTagClick: (tag: string) => void;
-	remarkPlugins: any;
-	rehypePlugins: any;
-	MarkdownComponents: any;
+	remarkPlugins: PluggableList;
+	rehypePlugins: PluggableList;
+	MarkdownComponents: Components;
 }
 
 const MemoCard = ({
@@ -136,7 +143,11 @@ const MemoCard = ({
 		<div
 			className={`memo-card ${note.pinned ? "pinned" : ""} ${isExpanded ? "expanded" : "collapsed"}`}
 		>
-			<div className="memo-header" onClick={() => setIsExpanded(!isExpanded)}>
+			<button
+				type="button"
+				className="memo-header"
+				onClick={() => setIsExpanded(!isExpanded)}
+			>
 				<div className="memo-meta">
 					<div className="memo-time">
 						{formatTimestamp(note.created)}
@@ -207,17 +218,18 @@ const MemoCard = ({
 							width="16"
 							height="16"
 						>
+							<title>Expand</title>
 							<polyline points="6 9 12 15 18 9" />
 						</svg>
 					</div>
 				</div>
-			</div>
+			</button>
 			{isExpanded && (
 				<div className="memo-body">
 					<div className="memo-content markdown-body">
 						<ReactMarkdown
-							remarkPlugins={remarkPlugins as any}
-							rehypePlugins={rehypePlugins as any}
+							remarkPlugins={remarkPlugins}
+							rehypePlugins={rehypePlugins}
 							components={MarkdownComponents}
 						>
 							{note.content}
@@ -244,14 +256,21 @@ const MemoCard = ({
 };
 
 // Extract plugins and components outside of App to prevent unnecessary re-renders
-const remarkPlugins: PluggableList = [remarkGfm, remarkMath, remarkBreaks, remarkFlexibleMarkers];
+const remarkPlugins: PluggableList = [
+	remarkGfm,
+	remarkMath,
+	remarkBreaks,
+	remarkFlexibleMarkers,
+];
 const rehypePlugins: PluggableList = [rehypeKatex];
 
 const MarkdownComponents: Components = {
 	pre({ children }) {
 		// Attempt to extract language from the child code element
 		const child = React.Children.only(children) as React.ReactElement;
-		const childProps = (child?.props as any) || {};
+		const childProps =
+			(child?.props as { className?: string; children?: React.ReactNode }) ||
+			{};
 		const className = childProps.className || "";
 		const match = /language-(\w+)/.exec(className);
 		const language = (match ? match[1] : "code").toUpperCase();
@@ -302,13 +321,15 @@ const MarkdownComponents: Components = {
 					</div>
 				</div>
 				{React.Children.map(children, (c) =>
-					React.cloneElement(c as React.ReactElement<any>, { isBlock: true }),
+					React.cloneElement(c as React.ReactElement<{ isBlock?: boolean }>, {
+						isBlock: true,
+					}),
 				)}
 			</div>
 		);
 	},
 	code({ className, children, ...props }) {
-		const isBlock = (props as any).isBlock;
+		const isBlock = (props as { isBlock?: boolean }).isBlock;
 		const match = /language-(\w+)/.exec(className || "");
 		const language = match ? match[1] : "";
 
@@ -328,7 +349,11 @@ const MarkdownComponents: Components = {
 						margin: 0,
 					}}
 					codeTagProps={{
-						style: { background: "transparent", display: "block", width: "100%" },
+						style: {
+							background: "transparent",
+							display: "block",
+							width: "100%",
+						},
 					}}
 				>
 					{String(children).replace(/\n$/, "")}
@@ -646,7 +671,9 @@ function App() {
 								// Task list prefix
 								const todoMatch = lineText.match(/^(\s*- \[[ xX]\]\s+)/);
 								// Bullet list prefix (prevent matching task list)
-								const ulMatch = !todoMatch ? lineText.match(/^(\s*[-*+]\s+)/) : null;
+								const ulMatch = !todoMatch
+									? lineText.match(/^(\s*[-*+]\s+)/)
+									: null;
 								// Ordered list prefix
 								const olMatch = lineText.match(/^(\s*)(\d+)\.\s+/);
 
@@ -657,7 +684,7 @@ function App() {
 									prefix = ulMatch[1];
 								} else if (olMatch) {
 									const spaces = olMatch[1];
-									const num = Number.parseInt(olMatch[2]);
+									const num = Number.parseInt(olMatch[2], 10);
 									prefix = `${spaces}${num + 1}. `;
 								}
 
@@ -763,7 +790,9 @@ function App() {
 
 				<div className="memos-feed">
 					{notes.length === 0 && !isLoading ? (
-						<div className="empty-state">No memos yet. Share your thoughts!</div>
+						<div className="empty-state">
+							No memos yet. Share your thoughts!
+						</div>
 					) : sortedNotes.length === 0 && !isLoading ? (
 						<div className="empty-state">No memos found.</div>
 					) : (

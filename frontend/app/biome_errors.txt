@@ -1,0 +1,54 @@
+src/App.tsx:156:5 lint/a11y/useSemanticElements ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × The elements with this role can be changed to the following elements:
+    <button>
+  
+    154 │ 					}
+    155 │ 				}}
+  > 156 │ 				role="button"
+        │ 				^^^^^^^^^^^^^
+    157 │ 				tabIndex={0}
+    158 │ 			>
+  
+  i For examples and more information, see WAI-ARIA Roles
+  
+
+src/App.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     36  36 │   const backendActor = createActor(canisterId, {
+     37  37 │   	agentOptions: {
+     38     │ - → → rootKey:·!import.meta.env.DEV
+     39     │ - → → → ?·canisterEnv.IC_ROOT_KEY
+     40     │ - → → → :·undefined,
+         38 │ + → → rootKey:·!import.meta.env.DEV·?·canisterEnv.IC_ROOT_KEY·:·undefined,
+     41  39 │   		shouldFetchRootKey: import.meta.env.DEV,
+     42  40 │   	},
+    ······· │ 
+    277 275 │   		// Attempt to extract language from the child code element
+    278 276 │   		const child = React.Children.only(children) as React.ReactElement;
+    279     │ - → → const·childProps·=·(child?.props·as·{·className?:·string;·children?:·React.ReactNode·})·||·{};
+        277 │ + → → const·childProps·=
+        278 │ + → → → (child?.props·as·{·className?:·string;·children?:·React.ReactNode·})·||
+        279 │ + → → → {};
+    280 280 │   		const className = childProps.className || "";
+    281 281 │   		const match = /language-(\w+)/.exec(className);
+    ······· │ 
+    328 328 │   				</div>
+    329 329 │   				{React.Children.map(children, (c) =>
+    330     │ - → → → → → React.cloneElement(c·as·React.ReactElement<{·isBlock?:·boolean·}>,·{·isBlock:·true·}),
+        330 │ + → → → → → React.cloneElement(c·as·React.ReactElement<{·isBlock?:·boolean·}>,·{
+        331 │ + → → → → → → isBlock:·true,
+        332 │ + → → → → → }),
+    331 333 │   				)}
+    332 334 │   			</div>
+  
+
+Checked 1 file in 16ms. No fixes applied.
+Found 2 errors.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+
