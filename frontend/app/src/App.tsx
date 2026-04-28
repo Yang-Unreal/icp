@@ -122,6 +122,7 @@ interface MemoCardProps {
 	onEdit: (id: bigint, note: Note) => void;
 	onDelete: (id: bigint) => void;
 	onTagClick: (tag: string) => void;
+	onToggleTodo: (id: bigint, note: Note, newContent: string) => void;
 	remarkPlugins: PluggableList;
 	rehypePlugins: PluggableList;
 	MarkdownComponents: Components;
@@ -133,11 +134,59 @@ const MemoCard = ({
 	onEdit,
 	onDelete,
 	onTagClick,
+	onToggleTodo,
 	remarkPlugins,
 	rehypePlugins,
 	MarkdownComponents,
 }: MemoCardProps) => {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const contentRef = useRef<HTMLDivElement>(null);
+
+	// After markdown renders, make checkboxes interactive via DOM
+	useEffect(() => {
+		const container = contentRef.current;
+		if (!container || !isExpanded) return;
+
+		const checkboxes = container.querySelectorAll<HTMLInputElement>(
+			'input[type="checkbox"]',
+		);
+
+		const handlers: Array<{ el: HTMLInputElement; handler: (e: Event) => void }> = [];
+
+		checkboxes.forEach((checkbox, index) => {
+			// Remove disabled attribute set by react-markdown/remarkGfm
+			checkbox.removeAttribute("disabled");
+			checkbox.classList.add("todo-checkbox");
+			checkbox.style.cursor = "pointer";
+
+			const handler = (e: Event) => {
+				e.stopPropagation();
+
+				// Toggle the nth checkbox pattern in the markdown source
+				const pattern = /- \[([ xX])\]/g;
+				let matchCount = 0;
+				const newContent = note.content.replace(
+					pattern,
+					(match, checkChar) => {
+						if (matchCount++ === index) {
+							return checkChar === " " ? "- [x]" : "- [ ]";
+						}
+						return match;
+					},
+				);
+				onToggleTodo(id, note, newContent);
+			};
+
+			checkbox.addEventListener("click", handler);
+			handlers.push({ el: checkbox, handler });
+		});
+
+		return () => {
+			for (const { el, handler } of handlers) {
+				el.removeEventListener("click", handler);
+			}
+		};
+	}, [isExpanded, note, id, onToggleTodo]);
 
 	return (
 		<div
@@ -226,7 +275,7 @@ const MemoCard = ({
 			</button>
 			{isExpanded && (
 				<div className="memo-body">
-					<div className="memo-content markdown-body">
+					<div ref={contentRef} className="memo-content markdown-body">
 						<ReactMarkdown
 							remarkPlugins={remarkPlugins}
 							rehypePlugins={rehypePlugins}
@@ -492,6 +541,31 @@ function App() {
 	const togglePinned = () => {
 		setPinned((prev) => !prev);
 	};
+
+	const handleToggleTodo = useCallback(
+		async (id: bigint, note: Note, newContent: string) => {
+			// Optimistically update local state for instant feedback
+			setNotes((prev) =>
+				prev.map(([nid, n]) =>
+					nid === id ? [nid, { ...n, content: newContent }] : [nid, n],
+				),
+			);
+			try {
+				await backendActor.updateNote(
+					id,
+					note.title,
+					newContent,
+					note.tags || [],
+					note.pinned || false,
+				);
+			} catch (e) {
+				console.error("Failed to save todo toggle:", e);
+				// Revert on failure
+				await fetchNotes();
+			}
+		},
+		[fetchNotes],
+	);
 
 	const filteredNotes = notes.filter(([_, note]) => {
 		if (!searchQuery) return true;
@@ -825,6 +899,7 @@ function App() {
 								onEdit={handleEditNote}
 								onDelete={handleDelete}
 								onTagClick={handleTagClick}
+								onToggleTodo={handleToggleTodo}
 								remarkPlugins={remarkPlugins}
 								rehypePlugins={rehypePlugins}
 								MarkdownComponents={MarkdownComponents}

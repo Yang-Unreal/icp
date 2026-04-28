@@ -812,6 +812,22 @@ body {
 	font-weight: bold;
 }
 
+/* Interactive todo checkbox in view mode */
+.markdown-body .task-list-item input[type="checkbox"].todo-checkbox {
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.markdown-body .task-list-item input[type="checkbox"].todo-checkbox:hover {
+	border-color: var(--primary-hover);
+	box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+	transform: scale(1.1);
+}
+
+.markdown-body .task-list-item input[type="checkbox"].todo-checkbox:active {
+	transform: scale(0.95);
+}
+
 .markdown-body .task-list-item.checked {
 	color: var(--text-muted);
 	text-decoration: line-through;
